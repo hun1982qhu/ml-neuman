@@ -109,10 +109,11 @@ def ray_to_samples(ray_batch,
     assert near.shape[0] == far.shape[0] == rays_per_batch
 
     t_vals = torch.linspace(0., 1., steps=samples_per_ray, device=device)
-    if not lindisp:
-        z_vals = near * (1.-t_vals) + far * (t_vals)
-    else:
-        z_vals = 1./(1./near * (1.-t_vals) + 1./far * (t_vals))
+    z_vals = (
+        1.0 / (1.0 / near * (1.0 - t_vals) + 1.0 / far * (t_vals))
+        if lindisp
+        else near * (1.0 - t_vals) + far * (t_vals)
+    )
 
     if perturb > 0.:
         # get intervals between samples
@@ -189,9 +190,7 @@ def sample_pdf(bins, weights, N_samples, det=False, device='cpu'):
     denom = (cdf_g[..., 1]-cdf_g[..., 0])
     denom = torch.where(denom < 1e-5, torch.ones_like(denom), denom)
     t = (u-cdf_g[..., 0])/denom
-    samples = bins_g[..., 0] + t * (bins_g[..., 1]-bins_g[..., 0])
-
-    return samples
+    return bins_g[..., 0] + t * (bins_g[..., 1]-bins_g[..., 0])
 
 
 def geometry_guided_near_far(orig, dir, vert, geo_threshold):

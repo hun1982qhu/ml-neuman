@@ -282,11 +282,13 @@ class HumanNeRFTrainer():
         dummy_dirs = torch.randn(dirs.shape, dtype=dirs.dtype, device=device)
         dummy_dirs = dummy_dirs / torch.norm(dummy_dirs, dim=-1, keepdim=True)
         dummy_out = self.net.coarse_human_net(pts, dummy_dirs)
-        color_reg = F.mse_loss(
-            torch.sigmoid(dummy_out.reshape(-1, 4))[:, :3],
-            torch.sigmoid(tgts.reshape(-1, 4))[:, :3]
-        ) * self.penalize_color_range
-        return color_reg
+        return (
+            F.mse_loss(
+                torch.sigmoid(dummy_out.reshape(-1, 4))[:, :3],
+                torch.sigmoid(tgts.reshape(-1, 4))[:, :3],
+            )
+            * self.penalize_color_range
+        )
 
     def _smpl_symmetry_regularization(self, pts, dirs, tgts):
         '''
@@ -296,11 +298,13 @@ class HumanNeRFTrainer():
         pts_flip = pts.clone().detach()
         pts_flip[..., 0] *= -1
         out_flip = self.net.coarse_human_net(pts_flip, dirs.clone().detach())
-        sym_reg = F.mse_loss(
-            torch.tanh(torch.relu(tgts[..., 3])),
-            torch.tanh(torch.relu(out_flip[..., 3]))
-        ) * self.penalize_symmetric_alpha
-        return sym_reg
+        return (
+            F.mse_loss(
+                torch.tanh(torch.relu(tgts[..., 3])),
+                torch.tanh(torch.relu(out_flip[..., 3])),
+            )
+            * self.penalize_symmetric_alpha
+        )
 
     def _smpl_shape_regularization(self, batch, pts, dirs, pred):
         device = pts.device

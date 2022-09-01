@@ -156,9 +156,7 @@ def render_vanilla(coarse_net, cap, fine_net=None, rays_per_batch=32768, samples
             total_depth_map.append(depth_map)
         total_rgb_map = torch.cat(total_rgb_map).reshape(*cap.shape, -1).detach().cpu().numpy()
         total_depth_map = torch.cat(total_depth_map).reshape(*cap.shape).detach().cpu().numpy()
-    if return_depth:
-        return total_rgb_map, total_depth_map
-    return total_rgb_map
+    return (total_rgb_map, total_depth_map) if return_depth else total_rgb_map
 
 
 def render_smpl_nerf(net, cap, posed_verts, faces, Ts, rays_per_batch=32768, samples_per_ray=64, white_bkg=True, render_can=False, geo_threshold=DEFAULT_GEO_THRESH, return_depth=False, return_mask=False, interval_comp=1.0):
